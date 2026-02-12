@@ -2,7 +2,8 @@
 title: "Project Dashboard"
 format: 
   dashboard:
-    scrolling: true 
+    scrolling: true
+    embed-resources: true 
     include-in-header:
       text: |
         <style>
