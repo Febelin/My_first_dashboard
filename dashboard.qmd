@@ -1,0 +1,115 @@
+---
+title: "Project Dashboard"
+format: 
+  dashboard:
+    scrolling: true 
+    include-in-header:
+      text: |
+        <style>
+        .quarto-dashboard-sidebar {
+          background-color: white !important;
+          border-right: 1px solid #dee2e6;
+        }
+        </style>
+theme: simplex
+---
+
+```{r}
+#| include: false
+library(tidyverse)
+library(palmerpenguins)
+library(gapminder)
+library(plotly)
+library(ggrepel)
+library(viridis)
+
+data(penguins)
+# Clean penguins data
+dt_clean <- penguins |> 
+   filter(
+    !is.na(bill_length_mm),
+    !is.na(bill_depth_mm),
+    !is.na(flipper_length_mm),
+    !is.na(body_mass_g),
+    !is.na(sex)
+  )
+
+data(gapminder)
+# Prepare gapminder data for 2007 Americas
+gap_07_americas <- gapminder |> 
+  filter(year == 2007, continent == "Americas")
+```
+
+# Penguins
+
+## Sidebar {.sidebar}
+
+### Penguin Stats
+
+This dashboard visualizes the Palmer Penguins dataset.
+
+We explore relationships between across three species:
+
+-   Bill Length
+-   Bill Depth
+-   Body Mass
+-   Flipper Length
+
+## Column
+
+### Row 1
+
+```{r}
+#| title: "Bill Dimensions by Species"
+#| fig-height: 5
+ggplot(dt_clean, aes(bill_length_mm, bill_depth_mm, color=species)) +
+  geom_point() +
+  scale_color_viridis_d(option = "plasma") +
+  theme_minimal() +
+  labs(x = "Bill Length (mm)", y = "Bill Depth (mm)")
+```
+
+### Row 2
+
+```{r}
+#| title: "Body Mass Distribution by Island"
+#| fig-height: 5
+ggplot(dt_clean, aes(x=island, y=body_mass_g, fill = island)) +
+  geom_boxplot() +
+  scale_fill_brewer(palette = "Dark2") +
+  theme_minimal() +
+  labs(x = "Island", y = "Body Mass (g)")
+```
+
+# Gapminder
+
+## Column {.tabset}
+
+### GDP Ranking (Lollipop)
+
+```{r}
+#| title: "2007 GDP per Capita in the Americas"
+ggplot(gap_07_americas, aes(x = gdpPercap, y = reorder(country, gdpPercap))) +
+  geom_segment(aes(x = 0, xend = gdpPercap, y = reorder(country, gdpPercap), yend = reorder(country, gdpPercap)), 
+               color = "grey70") + 
+  geom_point(color = "#2A5196", size = 2.5) +
+  scale_x_continuous(labels = scales::label_dollar()) +
+  theme_minimal() +
+  labs(x = "GDP per Capita", y = "Country")
+```
+
+### Interactive Life Expectancy
+
+```{r}
+#| title: "Life Expectancy vs GDP (Interactive)"
+p_interactive <- ggplot(gap_07_americas, aes(x = gdpPercap, y = lifeExp, 
+                                            text = paste("Country:", country, 
+                                                         "<br>Life Exp:", lifeExp, 
+                                                         "<br>GDP:", gdpPercap))) +
+  geom_point(aes(color = country), show.legend = FALSE) +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x = "GDP per Capita (log scale)", y = "Life Expectancy") +
+  theme_minimal()
+
+ggplotly(p_interactive, tooltip = "text")
+```
